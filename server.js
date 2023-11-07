@@ -24,11 +24,15 @@ async function initMongo() {
     try {
         await client.connect();
         const database = client.db('forum');
-        const posts = database.collection('post');
+        return [database, client];
+    } catch(error){
+        console.log(error)
+    }
+}
+initMongo()
+    .then(async ([db, client])=>{
+        const posts = db.collection('post');
         const allArray = await posts.find().toArray();
-        // // Query for a movie that has the title 'Back to the Future'
-        // const query = { title: 'back to the future' };
-        // const movie = await posts.findOne(query);
 
         console.log(allArray)
 
@@ -47,22 +51,30 @@ async function initMongo() {
 
         // post 처리
         app.post('/posts/add', async (request, response)=>{
-            await database.collection('post').insertOne({ title : request.body.title, content : request.body.content })
+            await db.collection('post').insertOne({ title : request.body.title, content : request.body.content })
             response.redirect('/')
         })
 
-    } catch(error){
-        console.log(error)
-    } finally {
-      // Ensures that the client will close when you finish/error
-        await client.close();
-    }
-}
-initMongo();
+        // put 처리
+        app.put('/posts/put', async (request, response)=>{
+            try {
+                // 데이터베이스에 데이터를 삽입하는 로직
+                await db.collection('post').insertMany(request.body);
+        
+                // 성공적으로 데이터를 삽입했다고 클라이언트에 알림
+                response.status(200).json({ message: "Posts added successfully" });
+            } catch (error) {
+                // 오류 발생 시, 클라이언트에 오류 메시지와 함께 500 상태 코드를 보냄
+                response.status(500).json({ message: "An error occurred", error: error });
+            }
+        })
+
+        // 항상 리액트 라우터 사용으로 고정
+        // app.get('*', function (request, response) {
+        //     response.sendFile(path.join(__dirname, '/reactapp/public/index.html'));
+        // });
+    })
+    .catch(err => console.log(err))
 
 
 
-// 항상 리액트 라우터 사용으로 고정
-// app.get('*', function (request, response) {
-//     response.sendFile(path.join(__dirname, '/reactapp/build/index.html'));
-// });
