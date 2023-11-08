@@ -12,6 +12,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'reactapp/build')));
 
 const { MongoClient, ObjectId } = require("mongodb");
+const { request } = require('http');
 
 const uri = "mongodb+srv://chorockmasil:Oo!!763754@cluster0.cmyoicy.mongodb.net/?retryWrites=true&w=majority";
 const client = new MongoClient(uri);
@@ -67,6 +68,19 @@ initMongo()
                 // 오류 발생 시, 클라이언트에 오류 메시지와 함께 500 상태 코드를 보냄
                 response.status(500).json({ message: "An error occurred", error: error });
             }
+        })
+
+        app.delete('/delete', async (request, response) =>{
+            try {
+                console.log(new ObjectId(request.body.id))
+
+                await db.collection('post').deleteOne({ _id: new ObjectId(request.body.id) });
+                response.status(200).json({ message: "Posts deleted successfully" });
+
+            } catch(error) {
+                response.status(500).json({ message: "An error occurred", error: error });
+            }
+
         })
 
         // 항상 리액트 라우터 사용으로 고정
